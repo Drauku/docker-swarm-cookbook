@@ -1,0 +1,79 @@
+# Homeassistant Recipe
+# /share/appdata/config/hass/hass.yml
+version: "3.4"
+
+services:
+  influxdb:
+    image: influxdb/influxdb:latest
+    networks:
+      - internal      
+    ports:
+      - 8086:8086
+    volumes:
+      - /share/runtime/hass/influxdb:/var/lib/influxdb
+      - /etc/localtime:/etc/localtime:ro
+      
+  influxdb-backup:
+    image: influxdb/influxdb:latest
+    volumes:
+      - /share/appdata/hass/influxdb-dump:/dump
+    entrypoint: |
+      bash -c 'bash -s <<EOF
+      trap "break;exit" SIGHUP SIGINT SIGTERM
+      sleep 2m
+      while /bin/true; do
+        mkdir /dump/`date +%d-%m-%Y`/
+        influxd backup -database homeassistant /dump/`date +%d-%m-%Y`/
+        tar cvfp /dump/influxdb-`date +%d-%m-%Y`.tar.gz /dump/`date +%d-%m-%Y`/
+        rm -rf /dump/`date +%d-%m-%Y`/
+        (ls -t /dump/influxdb*.tar.gz|head -n $$BACKUP_NUM_KEEP;ls /dump/influxdb*.tar.gz)|sort|uniq -u|xargs rm -- {}
+        sleep $$BACKUP_FREQUENCY
+      done
+      EOF'
+    networks:
+      - internal
+
+  homeassistant:
+    image: homeassistant/home-assistant:latest
+    ports:
+      - 8123:8123
+    volumes:
+      - /share/appdata/hass/config:/config
+      - /etc/localtime:/etc/localtime:ro
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.hass.entrypoints=https"
+        - "traefik.http.routers.hass.rule=Host(`homeassistant.gkoerk.com`)"
+        - "traefik.http.routers.hass.tls.certresolver=namecheap"
+        - "traefik.http.routers.hass.middlewares=basic-user@file"
+        - "traefik.http.services.hass.loadbalancer.server.port=8123"    
+    networks:
+      - traefik_public
+      - internal    
+        
+  grafana:
+    image: grafana/grafana:latest
+    volumes:
+      - /share/appdata/hass/grafana:/var/lib/grafana
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - internal
+      - traefik_public
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.hass-grafana.entrypoints=https"
+        - "traefik.http.routers.hass-grafana.rule=Host(`hass-grafana.gkoerk.com`)"
+        - "traefik.http.routers.hass-grafana.tls.certresolver=namecheap"
+        - "traefik.http.routers.hass-grafana.middlewares=basic-user@file"
+        - "traefik.http.services.hass-grafana.loadbalancer.server.port=3000"    
+
+networks:
+  traefik_public:
+    external: true
+  internal:
+    driver: overlay
+    ipam:
+      config:
+        - subnet: 172.16.14.0/24
