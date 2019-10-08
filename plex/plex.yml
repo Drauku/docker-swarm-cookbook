@@ -1,0 +1,120 @@
+# Plex Recipe
+# /share/appdata/config/plex/plex.yml
+version: "3.4"
+
+services:
+  plex:
+    image: linuxserver/plex:latest
+    environment:
+      - VERSION=docker
+      - PUID=1000
+      - PGID=100
+    ports:
+      - 32469:32469
+      - 32400:32400
+      - 32401:32401
+      - 33400:33400
+      - 33443:33443
+      - 3005:3005
+      - 8324:8324
+      - 5353:5353/udp
+      - 1900:1900/udp
+      - 32400:32400/udp
+      - 32469:32469/udp
+      - 32410:32410/udp
+      - 32412:32412/udp
+      - 32413:32413/udp
+      - 32414:32414/udp
+    networks:
+      - traefik_public        
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /share/appdata/plex:/config
+      - /share/media:/data
+      - /share/runtime/plex/transcode:/transcode
+    deploy:
+      labels:     
+        - "traefik.enable=true"
+        # First, we need a router for Plex that uses SSL.
+        - "traefik.http.routers.plex.entrypoints=https"
+        - "traefik.http.routers.plex.rule=Host(`plex.gkoerk.com`)"
+        - "traefik.http.routers.plex.tls.certresolver=namecheap"
+        # We do NOT want forward-auth enabled for Plex, as it has it's own 
+        # authorization/authentication.
+        #- "traefik.http.routers.plex.middlewares=forward-auth@file"
+        - "traefik.http.services.plex.loadbalancer.server.port=32400" 
+        # Next, we need a router (which has authentication) for webtools plugin
+        # own authorization/authentication.
+        - "traefik.http.routers.webtools.entrypoints=https"
+        - "traefik.http.routers.webtools.rule=Host(`webtools.gkoerk.com`)"
+        - "traefik.http.routers.webtools.tls.certresolver=namecheap"
+        - "traefik.http.routers.webtools.middlewares=forward-auth@file"
+        - "traefik.http.services.webtools.loadbalancer.server.port=33400" 
+
+  synclounge:
+    image: starbix/synclounge:latest
+    ports:
+      - 8088:8088
+      - 8089:8089
+    environment:
+      - DOMAIN=lounge.gkoerk.com
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        # We want to expose synclounge via http, so we need to specify an 
+        # http endpoint for it and be sure not to redirect.        
+        - "traefik.http.routers.synclounge.entrypoints=http"
+        - "traefik.http.routers.synclounge.rule=Host(`synclounge.gkoerk.com`)"
+        - "traefik.http.services.synclounge.loadbalancer.server.port=8088" 
+        # We want to expose the synclounge server via http, so we need
+        # to specify an http endpoint for it and be sure not to redirect.    
+        - "traefik.http.routers.slserver.entrypoints=http"
+        - "traefik.http.routers.slserver.rule=Host(`slserver.gkoerk.com`)"
+        - "traefik.http.services.slserver.loadbalancer.server.port=8089"        
+
+  tautulli:
+    image: linuxserver/tautulli:latest
+    env_file: /share/appdata/config/plex/tautulli.env
+    ports:
+      - 8181:8181
+    volumes:
+      - /share/media:/data
+      - /share/appdata/plex/tautulli:/config
+    networks:
+      - traefik_public
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.tautulli.entrypoints=https"
+        - "traefik.http.routers.tautulli.rule=Host(`tautulli.gkoerk.com`)"
+        - "traefik.http.routers.tautulli.tls.certresolver=namecheap"
+        - "traefik.http.routers.tautulli.middlewares=forward-auth@file"
+        - "traefik.http.services.tautulli.loadbalancer.server.port=8181" 
+
+  nowshowing:
+    image: ninthwalker/nowshowing:v2
+    environment:
+      - PUID=1000
+      - PGID=100
+      - TZ="America/Chicago"
+    volumes:
+      - /share/appdata/nowshowing/config:/config:rw
+    networks:
+      - traefik_public
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.nowshowing.entrypoints=https"
+        - "traefik.http.routers.nowshowing.rule=Host(`nowshowing.gkoerk.com`)"
+        - "traefik.http.routers.nowshowing.tls.certresolver=namecheap"
+        - "traefik.http.routers.nowshowing.middlewares=forward-auth@file"
+        - "traefik.http.services.nowshowing.loadbalancer.server.port=6878" 
+
+networks:
+  traefik_public:
+    external: true
+  internal:
+    driver: overlay
+    ipam:
+      config:
+        - subnet: 172.16.16.0/24

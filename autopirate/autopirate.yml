@@ -1,0 +1,260 @@
+# Autopirate Recipe
+# /share/appdata/config/autopirate/autopirate.yml
+version: "3.4"
+
+services:
+  heimdall:
+    image: linuxserver/heimdall:latest
+    environment:
+      - PUID=1000
+      - PGID=100
+      - TZ=America/Chicago
+    volumes:    
+      - /share/appdata/heimdall:/config
+    networks:
+      - traefik_public
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.heimdall.entrypoints=https"
+        - "traefik.http.routers.heimdall.rule=Host(`heimdall.gkoerk.com`)"
+        - "traefik.http.routers.heimdall.tls.certresolver=namecheap"
+        - "traefik.http.routers.heimdall.middlewares=forward-auth@file"
+        - "traefik.http.services.heimdall.loadbalancer.server.scheme=https"       
+        - "traefik.http.services.heimdall.loadbalancer.server.port=443"           
+       
+  oscarr:
+    image: morpheus65535/oscarr:latest
+    environment:
+      - PUID=1000
+      - PGID=100
+      - TZ=America/Chicago
+    volumes:
+      - /share/appdata/autopirate/oscarr:/oscarr/data
+    networks:
+      - traefik_public
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.oscarr.entrypoints=https"
+        - "traefik.http.routers.oscarr.rule=Host(`oscarr.gkoerk.com`)"
+        - "traefik.http.routers.oscarr.tls.certresolver=namecheap"
+        - "traefik.http.routers.oscarr.middlewares=forward-auth@file"
+        - "traefik.http.services.oscarr.loadbalancer.server.port=5656" 
+         
+  ombi:
+    image: linuxserver/ombi:latest
+    environment:
+      - PUID=1000
+      - PGID=100
+      - TZ=America/Chicago
+    volumes:
+      - /etc/localtime:/etc/localtime:ro    
+      - /share/appdata/autopirate/ombi:/config
+    networks:
+      - traefik_public
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.ombi.entrypoints=https"
+        - "traefik.http.routers.ombi.rule=Host(`ombi.gkoerk.com`)"
+        - "traefik.http.routers.ombi.tls.certresolver=namecheap"
+        - "traefik.http.routers.ombi.middlewares=forward-auth@file"
+        - "traefik.http.services.ombi.loadbalancer.server.port=3579" 
+        
+  headphones:
+    image: linuxserver/headphones:latest
+    environment:
+      - PUID=1000
+      - PGID=100
+      - TZ=America/Chicago
+    volumes:
+      - /share/media/music:/music
+      - /share/appdata/autopirate/headphones:/config
+      - /share/downloads:/downloads
+    networks:
+      - traefik_public
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.headphones.entrypoints=https"
+        - "traefik.http.routers.headphones.rule=Host(`headphones.gkoerk.com`)"
+        - "traefik.http.routers.headphones.tls.certresolver=namecheap"
+        - "traefik.http.routers.headphones.middlewares=forward-auth@file"
+        - "traefik.http.services.headphones.loadbalancer.server.port=8181" 
+
+  sonarr:
+    image: linuxserver/sonarr:latest
+    environment:
+      - PUID=1000
+      - PGID=100
+      - TZ=America/Chicago
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /share/media/tv:/tv
+      - /share/appdata/autopirate/sonarr:/config
+      - /share/downloads:/downloads
+    networks:
+      - traefik_public
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.sonarr.entrypoints=https"
+        - "traefik.http.routers.sonarr.rule=Host(`sonarr.gkoerk.com`)"
+        - "traefik.http.routers.sonarr.tls.certresolver=namecheap"
+        - "traefik.http.routers.sonarr.middlewares=forward-auth@file"
+        - "traefik.http.services.sonarr.loadbalancer.server.port=8989" 
+         
+  radarr:
+    image: linuxserver/radarr:latest
+    environment:
+      - PUID=1000
+      - PGID=100
+      - TZ=America/Chicago
+    volumes:
+      - /share/media/movies:/movies
+      - /share/appdata/autopirate/radarr:/config
+      - /share/downloads:/downloads
+    networks:
+      - traefik_public 
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.radarr.entrypoints=https"
+        - "traefik.http.routers.radarr.rule=Host(`radarr.gkoerk.com`)"
+        - "traefik.http.routers.radarr.tls.certresolver=namecheap"
+        - "traefik.http.routers.radarr.middlewares=forward-auth@file"
+        - "traefik.http.services.radarr.loadbalancer.server.port=7878"  
+      
+  bazarr:
+    image: linuxserver/bazarr:latest
+    environment:
+      - PUID=1000
+      - PGID=100
+      - TZ=America/Chicago
+      - UMASK_SET=022
+    volumes:
+      - /share/media/tv:/tv
+      - /share/media/movies:/movies
+      - /share/appdata/autopirate/bazarr:/config
+      - /share/downloads:/downloads
+    networks:
+      - traefik_public
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.bazarr.entrypoints=https"
+        - "traefik.http.routers.bazarr.rule=Host(`bazarr.gkoerk.com`)"
+        - "traefik.http.routers.bazarr.tls.certresolver=namecheap"
+        - "traefik.http.routers.bazarr.middlewares=forward-auth@file"
+        - "traefik.http.services.bazarr.loadbalancer.server.port=6767"        
+        
+  lidarr:
+    image: linuxserver/lidarr:latest
+    environment:
+      - PUID=1000
+      - PGID=100
+      - TZ=America/Chicago
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /share/media/music:/music
+      - /share/appdata/autopirate/lidarr:/config      
+      - /share/downloads:/downloads
+    networks:
+      - traefik_public
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.lidarr.entrypoints=https"
+        - "traefik.http.routers.lidarr.rule=Host(`lidarr.gkoerk.com`)"
+        - "traefik.http.routers.lidarr.tls.certresolver=namecheap"
+        - "traefik.http.routers.lidarr.middlewares=forward-auth@file"
+        - "traefik.http.services.lidarr.loadbalancer.server.port=8686"       
+
+  lazylibrarian:
+    image: linuxserver/lazylibrarian:latest
+    environment:
+      - PUID=1000
+      - PGID=100
+      - TZ=America/Chicago
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /share/appdata/autopirate/lazylibrarian:/config
+      - /share/downloads:/downloads
+      - /share/appdata/autopirate/lazylibrarian/books:/books
+    networks:
+      - traefik_public
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.lazylibrarian.entrypoints=https"
+        - "traefik.http.routers.lazylibrarian.rule=Host(`lazylibrarian.gkoerk.com`)"
+        - "traefik.http.routers.lazylibrarian.tls.certresolver=namecheap"
+        - "traefik.http.routers.lazylibrarian.middlewares=forward-auth@file"
+        - "traefik.http.services.lazylibrarian.loadbalancer.server.port=5299"     
+                 
+  nzbhydra:
+    image: linuxserver/hydra2:latest
+    environment:
+      - PUID=1000
+      - PGID=100
+      - TZ=America/Chicago
+    volumes:
+      - /share/appdata/autopirate/nzbhydra:/config
+      - /share/downloads:/downloads
+    networks:
+      - traefik_public
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.hydra2.entrypoints=https"
+        - "traefik.http.routers.hydra2.rule=Host(`hydra2.gkoerk.com`)"
+        - "traefik.http.routers.hydra2.tls.certresolver=namecheap"
+        - "traefik.http.routers.hydra2.middlewares=forward-auth@file"
+        - "traefik.http.services.hydra2.loadbalancer.server.port=5076"      
+
+  nzbget:
+    image: linuxserver/nzbget:latest
+    environment:
+      - PUID=1000
+      - PGID=100
+      - TZ=America/Chicago
+    volumes:
+      - /etc/localtime:/etc/localtime:ro      
+      - /share/appdata/autopirate/nzbget:/config
+      - /share/downloads:/downloads     
+    networks:
+      - traefik_public
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.nzbget.entrypoints=https"
+        - "traefik.http.routers.nzbget.rule=Host(`nzbget.gkoerk.com`)"
+        - "traefik.http.routers.nzbget.tls.certresolver=namecheap"
+        - "traefik.http.routers.nzbget.middlewares=forward-auth@file"
+        - "traefik.http.services.nzbget.loadbalancer.server.port=6789"        
+       
+  jackett:
+    image: linuxserver/jackett:latest
+    environment:
+      - PUID=1000
+      - PGID=100
+      - TZ=America/Chicago
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /share/appdata/autopirate/jackett:/config
+      - /share/downloads:/downloads      
+    networks:
+      - traefik_public
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.jackett.entrypoints=https"
+        - "traefik.http.routers.jackett.rule=Host(`jackett.gkoerk.com`)"
+        - "traefik.http.routers.jackett.tls.certresolver=namecheap"
+        - "traefik.http.routers.jackett.middlewares=forward-auth@file"
+        - "traefik.http.services.jackett.loadbalancer.server.port=9117"            
+      
+networks:
+  traefik_public:
+    external: true

@@ -1,0 +1,87 @@
+# Traefik Static Configuration
+# Host Path: /share/appdata/config/traefik/traefik-static.yaml
+# Internal Path: /etc/traefik/traefik-static.yaml
+
+global:
+  checkNewVersion: true
+
+serversTransport:
+  insecureSkipVerify: true
+
+entryPoints:
+  http:
+    address: ":80"
+    # Trust IPv4 Private Address Space
+    forwardedHeaders:
+      trustedIPs:
+      - "172.16.0.0/12"
+      - "10.0.0.0/8"
+      - "192.168.0.0/16"
+
+  https:
+    address: ":443"
+    # Trust IPv4 Private Address Space
+    forwardedHeaders:
+      trustedIPs:
+      - "172.16.0.0/12"
+      - "10.0.0.0/8"
+      - "192.168.0.0/16"
+
+providers:
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    # Alternative endpoint:
+    # endpoint: "tcp://127.0.0.1:2375"
+    watch: true
+    swarmMode: true
+    network: traefik_public
+    # Optional defaultRule: "Host(`{{ .Name }}.localhost`)"
+    useBindPortIP: false
+    exposedByDefault: false
+
+  file:
+    # Optional instead of directory: 
+    # filename: /etc/traefik/traefik-dynamic.yaml
+    directory: /etc/traefik/dynamic
+    watch: true
+    debugLogGeneratedTemplate: true
+
+api:
+  dashboard: true
+  insecure: true
+  debug: true
+
+metrics:
+  prometheus:
+    buckets:
+    - "0.1"
+    - "0.3"
+    - "1.2"
+    - "5"
+    addEntryPointsLabels: true
+    addServicesLabels: true
+    entryPoint: metrics
+
+ping:
+  entryPoint: ping
+
+log:
+  level: ERROR
+  filePath: "/etc/traefik/traefik.log"
+
+accessLog:
+  filePath: "/etc/traefik/access.log"
+
+certificatesResolvers:
+  namecheap:
+    acme:
+      email: "gkoerk@gmail.com"
+      storage: "/etc/traefik/acme.json"
+      # Alternative ACME Staging CA Server (not ratelimited like prod): 
+      # caServer: "https://acme-staging-v02.api.letsencrypt.org/directory"
+      dnsChallenge:
+        provider: namecheap
+        delayBeforeCheck: 0
+        resolvers:
+        - "1.1.1.1:53"
+        - "8.8.8.8:53"

@@ -1,0 +1,9 @@
+# Traefik Dynamic Configuration
+# Middleware: Compression
+# Host Path: /share/appdata/config/traefik/dynamic/compress.yaml
+# Internal Path: /etc/traefik/dynamic/compress.yaml
+
+http:
+  middlewares:
+    compress:
+      compress: {}

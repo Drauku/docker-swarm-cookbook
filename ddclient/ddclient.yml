@@ -1,0 +1,27 @@
+# DDClient Recipe
+# /share/appdata/config/ddclient/cddclient.yml
+version: "3.4"
+
+services:
+  ddclient:
+    image: linuxserver/ddclient:latest
+    environment:
+      - PUID=1000
+      - PGID=100
+      - TZ=America/Chicago
+    volumes:
+      - /share/appdata/ddclient/config:/config
+    networks:
+      - traefik_public
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.ddclient.entrypoints=https"
+        - "traefik.http.routers.ddclient.rule=Host(`ddclient.gkoerk.com`)"
+        - "traefik.http.routers.ddclient.tls.certresolver=namecheap"
+        - "traefik.http.routers.ddclient.middlewares=forward-auth@file"
+        - "traefik.http.services.ddclient.loadbalancer.server.port=3000" 
+
+networks:
+  traefik_public:
+    external: true

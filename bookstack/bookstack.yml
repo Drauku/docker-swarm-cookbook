@@ -1,0 +1,70 @@
+# Bookstack Recipe
+# /share/appdata/config/diskover/bookstack.yml
+version: "3.4"
+
+services:
+  app:
+    image: solidnerd/bookstack:latest
+    environment:
+      - DB_HOST=db:3306
+      - DB_DATABASE=bookstackdb
+      - DB_USERNAME=bookstack
+      - DB_PASSWORD=<dbpassword>
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - internal
+      - traefik_public
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.bookstack.entrypoints=https"
+        - "traefik.http.routers.bookstack.rule=Host(`bookstack.gkoerk.com`)"
+        - "traefik.http.routers.bookstack.tls.certresolver=namecheap"
+        - "traefik.http.services.bookstack.loadbalancer.server.port=80"
+
+  db:
+    image: mariadb:10
+    environment:
+      - MYSQL_RANDOM_ROOT_PASSWORD=<root_secret_password>
+      - MYSQL_DATABASE=bookstackdb
+      - MYSQL_USER=bookstack
+      - MYSQL_PASSWORD=<dbpassword>
+    networks:
+      - internal
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /share/runtime/bookstack/db:/var/lib/mysql
+
+  db-backup:
+    image: mariadb:10
+    environment:
+      # For database backup (keep 7 days daily backups)
+      - MYSQL_PWD=<root_secret_password>
+      - MYSQL_USER=root
+      - BACKUP_NUM_KEEP=7
+      - BACKUP_FREQUENCY=1d
+    volumes:
+      - /share/appdata/bookstack/database-dump:/dump
+      - /etc/localtime:/etc/localtime:ro
+    entrypoint: |
+      bash -c 'bash -s <<EOF
+      trap "break;exit" SIGHUP SIGINT SIGTERM
+      sleep 2m
+      while /bin/true; do
+        mysqldump -h db --all-databases | gzip -c > /dump/dump_\`date +%d-%m-%Y"_"%H_%M_%S\`.sql.gz
+        (ls -t /dump/dump*.sql.gz|head -n $$BACKUP_NUM_KEEP;ls /dump/dump*.sql.gz)|sort|uniq -u|xargs rm -- {}
+        sleep $$BACKUP_FREQUENCY
+      done
+      EOF'
+    networks:
+      - internal
+
+networks:
+  traefik_public:
+    external: true
+  internal:
+    driver: overlay
+    ipam:
+      config:
+        - subnet: 172.16.33.0/24

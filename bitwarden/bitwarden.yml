@@ -1,0 +1,26 @@
+# BitWarden Recipe
+# /share/appdata/config/bitwarden/bitwarden.yml
+version: "3.4"
+
+services:
+  bitwarden:
+    image: mprasil/bitwarden:latest
+    environment:
+      - DOMAIN='https://bw.gkoerk.com/'
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /share/appdata/bitwarden/data:/data:rw
+    networks:
+        - traefik_public
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.bitwarden.entrypoints=https"
+        - "traefik.http.routers.bitwarden.rule=Host(`bitwarden.gkoerk.com`)"
+        - "traefik.http.routers.bitwarden.tls.certresolver=namecheap"
+        - "traefik.http.routers.bitwarden.middlewares=forward-auth@file"
+        - "traefik.http.services.bitwarden.loadbalancer.server.port=80"
+
+networks:
+  traefik_public:
+    external: true

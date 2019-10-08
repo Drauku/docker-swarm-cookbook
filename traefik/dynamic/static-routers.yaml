@@ -1,0 +1,20 @@
+# Traefik Dynamic Configuration
+# Routers: Static (Non-Docker) Routers
+# Host Path: /share/appdata/config/traefik/dynamic/static-routers.yaml
+# Internal Path: /etc/traefik/dynamic/static-routers.yaml
+
+http:
+  routers:
+    gknas:
+      entryPoints:
+        - https
+      middlewares:
+        - forward-auth
+      service: gknas
+      rule: "Host(`gknas.gkoerk.com`)"
+      tls:
+        certResolver: namecheap
+        domains:
+          - main: "*.gkoerk.com"
+            sans:
+              - gkoerk.com

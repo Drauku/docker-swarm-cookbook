@@ -1,0 +1,27 @@
+# Gollum Wiki Recipe
+# /share/appdata/config/gollum/gollum.yml
+version: "3.4"
+
+services:
+  gollum:
+    image: dakue/gollum:latest
+    volumes:
+      - /share/appdata/gollum:/gollum
+    networks:
+      - traefik_public
+    command: |
+      --allow-uploads 
+      --emoji
+      --user-icons gravatar
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.gollum.entrypoints=https"
+        - "traefik.http.routers.gollum.rule=Host(`gollum.gkoerk.com`)"
+        - "traefik.http.routers.gollum.tls.certresolver=namecheap"
+        - "traefik.http.routers.gollum.middlewares=forward-auth@file"
+        - "traefik.http.services.gollum.loadbalancer.server.port=4567" 
+      
+networks:
+  traefik_public:
+    external: true

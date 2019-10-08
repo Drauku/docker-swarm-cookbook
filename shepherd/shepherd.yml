@@ -1,0 +1,25 @@
+# shepherd Recipe
+# /share/appdata/config/shepherd/shepherd.yml
+version: "3.4"
+
+services:
+  shepherd:
+    image: mazzolino/shepherd:latest
+    environment:
+      # Run every 24 hours. I really don't need new images more frequently than that.
+      - SLEEP_TIME=86400    
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - internal
+    deploy:
+      placement:
+        constraints: [node.role == manager]                                                   
+      mode: global
+
+networks:
+  internal:
+    driver: overlay
+    ipam:
+      config:
+        - subnet: 172.16.48.0/24

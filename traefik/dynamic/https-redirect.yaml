@@ -1,0 +1,10 @@
+# Traefik Dynamic Configuration
+# Middleware: HTTPS Redirect
+# Host Path: /share/appdata/config/traefik/dynamic/https-redirect.yaml
+# Internal Path: /etc/traefik/dynamic/https-redirect.yaml
+
+http:
+  middlewares:
+    https-redirect:
+      redirectScheme:
+        scheme: https

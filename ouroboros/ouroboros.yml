@@ -1,0 +1,21 @@
+# ouroboros Recipe
+# /share/appdata/config/ouroboros/ourobors.yml
+version: "3.4"
+
+services:
+  ouroboros:
+    image: pyouroboros/ouroboros:latest
+    environment:
+      - CLEANUP=true
+      - INTERVAL=300
+      - SELF_UPDATE=true
+      - TZ=America/Chicago
+      - NOTIFIERS=discord://https://discordapp.com/api/<thelinkfromdiscord> tgram://<bot>
+      - SWARM=true
+      - SKIP_STARTUP_NOTIFICATIONS=true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager

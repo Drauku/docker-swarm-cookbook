@@ -1,0 +1,21 @@
+# docker-cleanup Recipe
+# /share/appdata/config/docker-cleanup/docker-cleanup.yml
+version: "3.4"
+
+services:
+  docker-cleanup:
+    image: meltwater/docker-cleanup:latest
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/lib/docker:/var/lib/docker
+    networks:
+      - internal
+    deploy:
+      mode: global
+
+networks:
+  internal:
+    driver: overlay
+    ipam:
+      config:
+        - subnet: 172.16.0.0/24

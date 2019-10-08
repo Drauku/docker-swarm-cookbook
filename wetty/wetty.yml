@@ -1,0 +1,25 @@
+# Wetty Recipe
+# /share/appdata/config/wetty/wetty.yml
+version: "3.4"
+
+services:
+  wetty:
+    image: krishnasrinivas/wetty:latest
+    environment:
+      SSHHOST: 'GKNAS'
+      SSHPORT: 4000
+      SSHUSER: 'admin'
+    networks:
+      - traefik_public
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.wetty.entrypoints=https"
+        - "traefik.http.routers.wetty.rule=Host(`wetty.gkoerk.com`)"
+        - "traefik.http.routers.wetty.tls.certresolver=namecheap"
+        - "traefik.http.routers.wetty.middlewares=forward-auth@file"
+        - "traefik.http.services.wetty.loadbalancer.server.port=3000"       
+
+networks:
+  traefik_public:
+    external: true

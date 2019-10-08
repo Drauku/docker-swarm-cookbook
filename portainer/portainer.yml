@@ -1,0 +1,54 @@
+# Portainer Recipe
+# /share/appdata/config/portainer/portainer.yml
+version: "3.4"
+
+services:
+  app:
+    image: portainer/portainer:latest
+    volumes:
+      - /share/appdata/portainer:/data
+    ports:
+      - 9002:9000
+    networks:
+      - traefik_public
+      - internal
+    deploy:
+      replicas: 1
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.portainer.entrypoints=https"
+        - "traefik.http.routers.portainer.rule=Host(`portainer.gkoerk.com`)"
+        - "traefik.http.routers.portainer.tls.certresolver=namecheap"
+        - "traefik.http.routers.portainer.middlewares=forward-auth@file"
+        - "traefik.http.services.portainer.loadbalancer.server.port=9000"       
+      placement:
+        constraints: [node.role == manager]                                                   
+    command: -H tcp://tasks.agent:9001 --tlsskipverify
+
+  agent:
+    image: portainer/agent
+    environment:
+      - AGENT_CLUSTER_ADDR=tasks.agent
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/lib/docker/volumes:/var/lib/docker/volumes
+    ports:
+      - target: 9001
+        published: 9001
+        protocol: tcp
+        mode: host
+    networks:
+      - internal
+    deploy:
+      mode: global
+      placement:
+        constraints: [node.platform.os == linux]
+
+networks:
+  traefik_public:
+    external: true
+  internal:
+    driver: overlay
+    ipam:
+      config:
+        - subnet: 172.16.13.0/24

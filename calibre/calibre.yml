@@ -1,0 +1,30 @@
+# Calibre Recipe
+# /share/appdata/config/calibre/calibre.yml
+version: "3.4"
+
+services:
+  calibre:
+    image: linuxserver/calibre-web:latest
+    environment:
+      - PGID=1000
+      - PUID=100
+      - TZ=America/Chicago
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /share/appdata/calibre:/config
+      # Set this next volume to wherever you store your Calibre library. From the container's perspective, this has to be /books/
+      - /share/appdata/nextcloud/data/admin/files/Books:/books
+    networks:
+      - traefik_public
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.calibre.entrypoints=https"
+        - "traefik.http.routers.calibre.rule=Host(`library.gkoerk.com`)"
+        - "traefik.http.routers.calibre.tls.certresolver=namecheap"
+        - "traefik.http.routers.calibre.middlewares=forward-auth@file"
+        - "traefik.http.services.calibre.loadbalancer.server.port=8083"
+
+networks:
+  traefik_public:
+    external: true

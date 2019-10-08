@@ -1,0 +1,26 @@
+# Filebrowser Recipe
+# /share/appdata/config/filebrowser/filebrowser.yml
+version: "3.4"
+
+services:
+  app:
+    image: filebrowser/filebrowser:latest
+    volumes:
+      # Base scope of filebrowser access on your server:
+      - /share/appdata/config:/srv 
+      - /share/appdata/config/filebrowser/config.json:/etc/config.json
+      - /share/runtime/filebrowser/database:/etc/database.db
+    networks:
+      - traefik_public
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.filebrowser.entrypoints=https"
+        - "traefik.http.routers.filebrowser.rule=Host(`filebrowser.gkoerk.com`)"
+        - "traefik.http.routers.filebrowser.tls.certresolver=namecheap"
+        - "traefik.http.routers.filebrowser.middlewares=forward-auth@file"
+        - "traefik.http.services.filebrowser.loadbalancer.server.port=80"      
+      
+networks:
+  traefik_public:
+    external: true

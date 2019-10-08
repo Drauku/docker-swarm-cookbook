@@ -1,0 +1,25 @@
+# Autopirate Recipe
+# /share/appdata/config/autopirate/autopirate.yml
+version: "3.4"
+
+services:
+  app:
+    image: jgeusebroek/privatebin
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /share/appdata/privatebin/data:/privatebin/data
+      - /share/appdata/privatebin/config:/privatebin/cfg   
+    networks:
+      - traefik_public
+    deploy:
+      labels:
+        - "traefik.enable=true"         
+        - "traefik.http.routers.paste.entrypoints=https"
+        - "traefik.http.routers.paste.rule=Host(`whoami.gkoerk.com`)"
+        - "traefik.http.routers.paste.tls.certresolver=namecheap"
+        - "traefik.http.services.paste.loadbalancer.server.port=80"         
+        - "traefik.http.routers.paste.middlewares=forward-auth@file"         
+
+networks:
+  traefik_public:
+    external: true

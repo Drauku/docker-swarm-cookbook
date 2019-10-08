@@ -1,0 +1,11 @@
+# Traefik Dynamic Configuration
+# Middleware: Basic Authentication
+# Host Path: /share/appdata/config/traefik/dynamic/basic-user.yaml
+# Internal Path: /etc/traefik/dynamic/basic-user.yaml
+
+http:
+  middlewares:
+    basic-user:
+      basicAuth:
+        users:
+          - "admin:<bcrypt_password_from_htpasswd_command>"

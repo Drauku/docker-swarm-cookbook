@@ -1,0 +1,23 @@
+# Dozzle Recipe
+# /share/appdata/config/dozzle/dozzle.yml
+version: "3.4"
+
+services:
+  app:
+    image: amir20/dozzle:latest
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - traefik_public
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.dozzle.entrypoints=https"
+        - "traefik.http.routers.dozzle.rule=Host(`dozzle.gkoerk.com`)"
+        - "traefik.http.routers.dozzle.tls.certresolver=namecheap"
+        - "traefik.http.routers.dozzle.middlewares=forward-auth@file"
+        - "traefik.http.services.dozzle.loadbalancer.server.port=8080"
+
+networks:
+  traefik_public:
+    external: true

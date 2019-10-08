@@ -1,0 +1,12 @@
+# Traefik Dynamic Configuration
+# Middleware: Secured Chain (Testing)
+# Host Path: /share/appdata/config/traefik/dynamic/secured-chain.yaml
+# Internal Path: /etc/traefik/dynamic/secured-chain.yaml
+
+http:
+  middlewares:
+    secured:
+      chain:
+        middlewares:
+          - https-redirect
+          - forward-auth
