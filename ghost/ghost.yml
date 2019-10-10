@@ -1,0 +1,29 @@
+# Ghost Recipe
+# /share/appdata/config/ghost/ghost.yml
+version: "3.4"
+
+services:
+  ghost:
+    image: ghost:alpine
+    volumes:
+      - /share/appdata/ghost:/var/lib/ghost/content
+    environment:
+      - url=https://blog.gkoerk.com
+      - NODE_ENV=production
+      - mail__transport=SMTP
+      - mail__options__service=Mailgun
+      - mail__options__auth__user=user@mail.domain.com
+      - mail__options__auth__pass=password
+    networks:
+      - traefik_public
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.ghost.entrypoints=https"
+        - "traefik.http.routers.ghost.rule=Host(`blog.gkoerk.com`)"
+        - "traefik.http.routers.ghost.tls.certresolver=namecheap"
+        - "traefik.http.services.ghost.loadbalancer.server.port=2368"
+
+networks:
+  traefik_public:
+    external: true
