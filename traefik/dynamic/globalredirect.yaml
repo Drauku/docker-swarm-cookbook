@@ -11,4 +11,5 @@ http:
       middlewares:
         - https-redirect
       rule: "HostRegexp(`{host:[a-z-.]+}`)"
+      priority: 10
       service: noop

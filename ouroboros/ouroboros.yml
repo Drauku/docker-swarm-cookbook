@@ -1,5 +1,5 @@
 # ouroboros Recipe
-# /share/appdata/config/ouroboros/ourobors.yml
+# /share/appdata/config/ouroboros/ouroboros.yml
 version: "3.4"
 
 services:
@@ -8,14 +8,24 @@ services:
     environment:
       - CLEANUP=true
       - INTERVAL=300
-      - SELF_UPDATE=true
+      # - SELF_UPDATE=true
       - TZ=America/Chicago
-      - NOTIFIERS=discord://https://discordapp.com/api/<thelinkfromdiscord> tgram://<bot>
+      - LABEL_ENABLE=true
+      # - NOTIFIERS="mailtos://gkoerk@mail.gkoerk.com:myPassword@gmail.com?to=gkoerk@gmail.com"
       - SWARM=true
-      - SKIP_STARTUP_NOTIFICATIONS=true
+      - SKIP_STARTUP_NOTIFICATIONS=false
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+   networks:
+     - internal
     deploy:
       placement:
         constraints:
           - node.role == manager
+
+networks:
+  internal:
+    driver: overlay
+    ipam:
+      config:
+        - subnet: 172.16.68.0/24
